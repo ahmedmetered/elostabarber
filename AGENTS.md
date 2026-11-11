@@ -28,3 +28,9 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Application rules
+- Keep bilingual shop content and demo values in `src/data/barber.ts` so both languages remain complete and consistent.
+- Keep booking requests and loyalty interactions in React state only; this is a frontend demo without appointment persistence.
+- Use CSS-based illustrations and direction-aware motion; browser storage is accessed only after hydration or in user actions.
+- Keep this explicitly single-page experience at `/`, with anchors for its in-page sections.

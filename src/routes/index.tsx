@@ -1,23 +1,45 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, ArrowRight, Scissors, Clock, Star, MapPin, Check, Menu, X, Globe, ShieldCheck, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { data, type Language, type Copy, number, price, earnedFreeCut } from '@/data/barber';
+import { BarberScene, SnippingScissors, ServiceIcon, Confetti } from '@/components/barber-art';
+import { Booking } from '@/components/booking';
 
-// The home route ships no og:image, so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
-export const Route = createFileRoute("/")({
-  component: Index,
+export const Route = createFileRoute('/')({
+  head: () => ({ meta: [
+    { title: 'الأسطى باربر — شياكة تبدأ من الكرسي | El Osta Barber' },
+    { name: 'description', content: 'قص شعر، دقن وحلاقة على أصولها. اكتشف أسطوات الأسطى باربر وجرّب طلب حجز كرسيك. Demo bookings at El Osta Barber.' },
+    { property: 'og:title', content: 'الأسطى باربر — El Osta Barber' },
+    { property: 'og:description', content: 'شياكة تبدأ من الكرسي. Sharp starts here. Explore our cuts, shaves, and demo booking.' },
+    { property: 'og:type', content: 'website' }, { name: 'twitter:card', content: 'summary_large_image' },
+  ] }), component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
+  const [lang, setLang] = useState<Language>('ar');
+  const [menu, setMenu] = useState(false);
+  const [category, setCategory] = useState(0);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [stamps, setStamps] = useState(0);
+  const [wait, setWait] = useState(15);
+  const t = (copy: Copy) => copy[lang];
+  const Arrow = lang === 'ar' ? ArrowLeft : ArrowRight;
+  useEffect(() => { try { if (localStorage.getItem('osta-language') === 'en') setLang('en'); } catch { /* storage unavailable */ } }, []);
+  useEffect(() => { document.documentElement.lang = lang; document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'; }, [lang]);
+  useEffect(() => { const timer = setInterval(() => setWait(v => v >= 18 ? 12 : v + 1), 45000); return () => clearInterval(timer); }, []);
+  function changeLanguage() { const next = lang === 'ar' ? 'en' : 'ar'; setLang(next); try { localStorage.setItem('osta-language', next); } catch { /* optional persistence */ } }
+  function jump(id: string) { document.getElementById(id)?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); setMenu(false); }
+  return <main className="barber-site" dir={lang === 'ar' ? 'rtl' : 'ltr'} lang={lang}>
+    <header className="site-header"><div className="content-width header-inner"><a className="brand" href="#top"><span className="brand-mark"><Scissors /></span><span><b>{t(data.shop)}</b><small>{data.shop[lang === 'ar' ? 'en' : 'ar']}</small></span></a><nav className={menu ? 'header-nav nav-open' : 'header-nav'}>{data.nav.map((n, i) => <Button key={n.en} variant="ghost" onClick={() => jump(['services', 'barbers', 'booking'][i] ?? 'booking')}>{t(n)}</Button>)}</nav><div className="header-actions"><Button className="language-button" variant="ghost" onClick={changeLanguage}><Globe /><span>{lang === 'ar' ? 'English' : 'العربية'}</span></Button><Button className="header-book" onClick={() => jump('booking')}><Scissors />{t(data.book)}</Button><Button variant="ghost" size="icon" className="mobile-menu" aria-label={t(menu ? data.closeMenu : data.openMenu)} onClick={() => setMenu(!menu)}>{menu ? <X /> : <Menu />}</Button></div></div></header>
+    <section className="hero" id="top"><div className="content-width hero-inner"><div className="hero-copy" key={lang}><span className="eyebrow"><span className="tiny-pole" />{t(data.eyebrow)}</span><h1>{t(data.shopFirst)}<span>{t(data.shopSecond)}<span className="headline-star">✦</span></span></h1><h2>{t(data.tagline)}</h2><p>{t(data.intro)}</p><div className="hero-buttons"><Button size="lg" onClick={() => jump('booking')}>{t(data.book)}<Arrow /></Button><Button variant="ghost" size="lg" onClick={() => jump('services')}>{t(data.discover)}<Scissors /></Button></div><div className="hero-social"><div className="social-stars">★★★★★</div><span><b>{number(4.9, lang)}</b> / {number(5, lang)}</span><span className="social-divider" /><span>{number(250, lang)}+ {t(data.clients)}</span></div></div><BarberScene /></div><div className="hero-benefits content-width">{data.heroFacts.map((fact, i) => <span key={fact.en}>{i === 0 ? <Scissors /> : i === 1 ? <ShieldCheck /> : <Sparkles />}{t(fact)}</span>)}</div></section>
+    <div className="marquee-band"><div>{[...data.marquee, ...data.marquee].map((m, i) => <span key={i}>{t(m)}<span>✦</span></span>)}</div></div>
+    <section id="services" className="services-section section-pad"><div className="content-width"><div className="section-heading split-heading"><div><span className="eyebrow">{t(data.serviceEyebrow)}</span><h2>{t(data.serviceTitle)}</h2></div><p>{t(data.serviceIntro)}</p></div><div className="service-tabs" role="tablist" aria-label={t(data.nav[0] ?? data.serviceTitle)}>{data.categories.map((cat, i) => <Button key={cat.en} role="tab" aria-selected={category === i} variant="tab" className={category === i ? 'is-selected' : ''} onClick={() => setCategory(i)}>{t(cat)}</Button>)}</div><div className="service-grid" key={category}>{data.services.filter(s => s.category === category).map((s, i) => <article className={`service-card service-tone-${i % 2}`} key={s.id}><div className="service-card-top"><span className="service-art"><ServiceIcon kind={s.icon} /></span><span className="ticket">{t(s.badge)}</span></div><h3>{t(s.name)}</h3><p>{t(s.description)}</p><div className="service-bottom"><span className="service-duration"><Clock />{number(s.duration, lang)} {t(data.minute)}</span><Button className="price-tag" variant="ghost" onClick={() => { setSelected(selected.includes(s.id) ? selected.filter(id => id !== s.id) : [...selected, s.id]); }} aria-label={`${t(data.add)}: ${t(s.name)}`}>{price(s.price, lang)}</Button></div><Button variant="ghost" className="service-add" onClick={() => { if (!selected.includes(s.id)) setSelected([...selected, s.id]); jump('booking'); }}>{selected.includes(s.id) ? <Check /> : <Arrow />}{selected.includes(s.id) ? t(data.selected) : t(data.add)}</Button></article>)}</div></div></section>
+    <div className="scissor-divider"><span /><SnippingScissors /><span /></div>
+    <section id="barbers" className="barbers-section section-pad"><div className="content-width"><div className="section-heading centered"><span className="eyebrow">{t(data.barberEyebrow)}</span><h2>{t(data.barberTitle)}</h2><p>{t(data.barberIntro)}</p></div><div className="barber-grid">{data.barbers.map(b => <article className="barber-card" key={b.id}><div className={`barber-avatar avatar-${b.tone}`}><span className="avatar-deco">✦</span><span>{t(b.initials)}</span><Scissors /></div><div className="barber-info"><div><h3>{t(b.name)}</h3><p>{t(b.specialty)}</p></div><span className="barber-rating"><Star />{number(b.rating, lang)}</span></div></article>)}</div></div></section>
+    <Booking lang={lang} selected={selected} setSelected={setSelected} />
+    <section className="extras-section section-pad"><div className="content-width extras-grid"><div className="wait-widget"><span className="eyebrow">{t(data.waitEyebrow)}</span><h2>{t(data.waitTitle)}</h2><div className={`wait-gauge wait-${wait}`}><svg viewBox="0 0 220 125" aria-hidden="true"><path className="gauge-track" d="M25 110a85 85 0 0 1 170 0" /><path className="gauge-fill" d="M25 110a85 85 0 0 1 170 0" /></svg><div><strong>{number(wait, lang)}</strong><span>{t(data.minute)}</span></div></div><p>{t(data.waitDescription)}</p><span className="live-indicator"><i />{t(data.live)}</span><small>{t(data.queue)}</small></div><div className="loyalty-widget"><span className="eyebrow">{t(data.loyaltyEyebrow)}</span><h2>{t(data.loyaltyTitle)}</h2><p>{t(data.loyaltyDescription)}</p><div className="loyalty-card"><div className="loyalty-card-brand"><Scissors /><b>{t(data.shop)}</b><span>✦</span></div><div className="stamp-grid">{Array.from({ length: 6 }, (_, i) => <Button key={i} variant="stamp" disabled={stamps >= i + 1} className={`${stamps >= i + 1 ? 'is-stamped' : ''} ${i === 5 ? 'free-stamp' : ''}`} onClick={() => setStamps(stamps + 1)} aria-label={`${t(data.stamp)} ${number(i + 1, lang)}`}>{stamps >= i + 1 ? <Scissors /> : i === 5 ? <><Star /><small>{t(data.free)}</small></> : <><Scissors /><small>{number(i + 1, lang)}</small></>}</Button>)}</div><div className="loyalty-card-bottom"><span>{t(data.loyaltyDemo)}</span><b>{number(stamps, lang)} / {number(6, lang)}</b></div>{earnedFreeCut(stamps) && <><Confetti /><p role="status" className="loyalty-reward">{t(data.reward)}</p></>}</div></div></div></section>
+    <section className="visit-section section-pad"><div className="content-width visit-grid"><div><span className="eyebrow">{t(data.visit)}</span><h2>{t(data.shop)}</h2><p className="address"><MapPin />{t(data.address)}</p><small className="muted-text">{t(data.fictional)}</small><h3 className="hours-heading"><Clock />{t(data.hoursTitle)}</h3>{data.hours.map(h => <div className="hours-row" key={h.days.en}><span>{t(h.days)}</span><b>{t(h.time)}</b></div>)}</div><div className="map-placeholder"><div className="map-road road-one" /><div className="map-road road-two" /><div className="map-road road-three" /><div className="map-pin"><Scissors /></div><div className="map-label"><MapPin /><b>{t(data.map)}</b></div><span className="map-cross">+</span></div></div></section>
+    <footer><div className="content-width footer-inner"><a href="#top" className="brand"><span className="brand-mark"><Scissors /></span><b>{t(data.shop)}</b></a><span>{t(data.footer)}</span><small>© {number(2026, lang)} {t(data.copyright)}</small></div><p className="footer-demo">{t(data.demo)}</p></footer>
+  </main>;
 }
